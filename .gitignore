@@ -1,0 +1,46 @@
+# =============== #
+# Unity generated #
+# =============== #
+/[Tt]emp/
+/[Ll]ibrary/
+/[Bb]uild/
+/[Bb]uilds/
+/[Oo]bj/
+
+# ===================================== #
+# Visual Studio / MonoDevelop generated #
+# ===================================== #
+ExportedObj/
+*.svd
+*.userprefs
+*.csproj
+*.pidb
+*.suo
+*.sln
+*.user
+*.unityproj
+*.booproj
+*.pidb.meta
+sysinfo.txt
+
+# ============ #
+# OS generated #
+# ============ #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+
+# ============ #
+# Dangerous Folder .Meta Files #
+# add folders here if they are NOT supposed to appear in Version Control #
+# each folder requires two lines - one for folder, one for .meta file!!! #
+# like this #
+# Assets/FOLDERNAME/FOLDERNAME	#
+# Assets/FOLDERNAME/FOLDERNAME.meta #
+# ============ #
+.vs/
