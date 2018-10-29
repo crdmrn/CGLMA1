@@ -29,12 +29,16 @@ namespace Overcooked {
 		// store input values from keyboard/controller
 		Vector3 input;
 
-		Rigidbody r;
+		// store reference to player Rigidbody component
+		Rigidbody playerRigidbody;
+
+		public float acceleration;
+		public float maxSpeed;
 
 		// Use this for initialization
 		void Start () {
 			// access rigidbody on the same gameObject
-			r = GetComponent<Rigidbody>();
+			playerRigidbody = GetComponent<Rigidbody>();
 		}
 	
 		// Update is called once per frame
@@ -48,9 +52,22 @@ namespace Overcooked {
 			// GetComponent is a very heavy function, better not call it in the Update
 			//Rigidbody r = GetComponent<Rigidbody>();
 			// apply consequent force to rigidbody
-			r.AddForce(input * 10f, ForceMode.Acceleration);
+			playerRigidbody.AddForce(input * acceleration, ForceMode.VelocityChange);
+
+			// store velocity of the rigidbody (that includes the direction, as it's a vector)
+			Vector3 rVelocity = playerRigidbody.velocity;
+			// if the magnitude (length) of the velocity is bigger of the set max
+			if (playerRigidbody.velocity.magnitude > maxSpeed)
+			{
+				// take normalized (=1) form of the velocity and multiply it by the max speed
+				Vector3 cappedVelocity = rVelocity.normalized * maxSpeed;
+				// apply it to the rigidbody
+				playerRigidbody.velocity = cappedVelocity;
+			}
+			Debug.Log(playerRigidbody.velocity.magnitude);
+
 			// write value to console
-			Debug.Log(input);
+			//Debug.Log(input);
 		}
 
 	}

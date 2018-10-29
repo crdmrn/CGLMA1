@@ -22,8 +22,8 @@ GameObject:
   - component: {fileID: 33885204134157330}
   - component: {fileID: 23576443063828684}
   - component: {fileID: 136986583741483394}
-  - component: {fileID: 54502020725793082}
-  - component: {fileID: 114934410127100280}
+  - component: {fileID: 54138237012369510}
+  - component: {fileID: 114566970378844254}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Untagged
@@ -86,7 +86,7 @@ MeshFilter:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1193425031432666}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!54 &54502020725793082
+--- !u!54 &54138237012369510
 Rigidbody:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -101,7 +101,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!114 &114934410127100280
+--- !u!114 &114566970378844254
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -112,6 +112,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b27b98ed2c71bfb41b620f104e6b45a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  acceleration: 0
+  maxSpeed: 0
 --- !u!136 &136986583741483394
 CapsuleCollider:
   m_ObjectHideFlags: 1
