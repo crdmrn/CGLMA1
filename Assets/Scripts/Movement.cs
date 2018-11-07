@@ -54,6 +54,9 @@ namespace Overcooked {
 		// store the reference to the Rigidbody component attached to our player gameObject
 		Rigidbody playerRigidbody;
 
+		// store reference to player's Animator component
+		Animator playerAnimator;
+
 		// allow us to decide the acceleration of our player
 		// we set it to public so we can experiment in the editor without changing the value in the code
 		public float acceleration;
@@ -67,6 +70,9 @@ namespace Overcooked {
 			// GetComponent<T> checks if a Rigidbody component is attached to this gameObject and eventully returns its reference
 			// we store such reference in a variable, so we can access it whenever we want, as THE GETCOMPONENT FUNCTION IS VERY HEAVY TO PERFORM
 			playerRigidbody = GetComponent<Rigidbody>();
+
+			// look for an Animator Component among the children of the player gameobject
+			playerAnimator = GetComponentInChildren<Animator>();
 		}
 
 		// Update is called once per frame
@@ -111,9 +117,35 @@ namespace Overcooked {
 
 			}
 
+
 			// write the velocity value to the console to check if our code works
-			Debug.Log(playerRigidbody.velocity.magnitude);
+			//Debug.Log(playerRigidbody.velocity.magnitude);
+
+			// ---- LESSON 2
+			// make sure the animator controller is there before calling the function
+			if (playerAnimator != null)	
+				playerAnimator.SetFloat("Speed", playerRigidbody.velocity.magnitude);
+			// set player facing direction
+			// Vector3.sqrMagnitude is quicker to access than Vector3.Magnitude
+			if (playerRigidbody.velocity.sqrMagnitude > 0.001f) {
+				RotateCharacter();
+			}
+
 		}
+
+		#region CharacterRotation
+		public float rotationSpeed = 1f;
+
+		void RotateCharacter() {
+			// get the rotation of the playerRigidbody velocity vector
+			Quaternion directionRot = Quaternion.LookRotation(playerRigidbody.velocity);
+
+			Quaternion lerpedRot = Quaternion.Slerp(playerRigidbody.rotation, directionRot, Time.deltaTime * rotationSpeed);
+			// apply it to the rigidbody
+			playerRigidbody.MoveRotation(lerpedRot);
+		}
+		#endregion
+
 
 	}
 
