@@ -121,27 +121,49 @@ namespace Overcooked {
 			// write the velocity value to the console to check if our code works
 			//Debug.Log(playerRigidbody.velocity.magnitude);
 
-			// ---- LESSON 2
-			// make sure the animator controller is there before calling the function
-			if (playerAnimator != null)	
+			// ---- LESSON 2 ----
+
+			// to allow the Animator component to blend between IDLE, WALK and RUN animations, we need to feed him the speed at which the player is moving
+			// first, we make sure the Animator component is actually attached to our player gameObject
+			if (playerAnimator != null) {
+				// if it is we use the Animator.SetFloat(string name, float value) to set the value of the Speed variable in the AnimatorController used by the Animator
 				playerAnimator.SetFloat("Speed", playerRigidbody.velocity.magnitude);
-			// set player facing direction
-			// Vector3.sqrMagnitude is quicker to access than Vector3.Magnitude
+			}
+
+			// when the player is moving, we want it to face the movement direction
+			// to check if the player is moving, we just chef if velocity.sqrMgnitude value of its rigidbody is bigger than 0
+			// Vector3.sqrMagnitude (squared Magnitude) is quicker to access than Vector3.Magnitude
 			if (playerRigidbody.velocity.sqrMagnitude > 0.001f) {
+				// we call the function to rotate the player
+				//such function is defined some lines below, in the "CharacterRotation" #region
 				RotateCharacter();
 			}
 
 		}
 
+		// #region and #endregion can be used to better organize the code
 		#region CharacterRotation
+
+		// float variable to allow us to decide how fast should the plazer rotate towards the movement direction
 		public float rotationSpeed = 1f;
 
+		// function to rotate the character
+		// void means that this function DOES NOT return any value, it only runs some code
+		// the empty brackets () next to the function name mean that this function does not need any values to be paresd in order to work
 		void RotateCharacter() {
+
 			// get the rotation of the playerRigidbody velocity vector
+			// Quaternions are used to sore rotation data, they work like Vectors do for directions
 			Quaternion directionRot = Quaternion.LookRotation(playerRigidbody.velocity);
 
+			// now that we know which is the rotation we need to apply to our character in  order to match the movement direction
+			// we want to make sure that it?s not applied all at once, but instead only part of it every frame, to obtain a lerping effect
+			// Quaterion.Slerp(Quaternion a, Quaternion b, float t) returns the interpolated t value between a and b, where t is clamped between 0 (which returns a) and 1 (which returns b)
+			// Time.deltaTime is a float indicating the amount of time in seconds that it took the computer to render the last frame
+			// by multiplying the rotation speed with Time.deltaTime, we make it independent of the framerate
 			Quaternion lerpedRot = Quaternion.Slerp(playerRigidbody.rotation, directionRot, Time.deltaTime * rotationSpeed);
-			// apply it to the rigidbody
+
+			// after we calculated the desired rotation for this frame, we apply it to the rigidbody by using its MoveRotation(Quaternion rotation) function
 			playerRigidbody.MoveRotation(lerpedRot);
 		}
 		#endregion
