@@ -4723,7 +4723,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbd4752459089be49b7a264c22e97710, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickupKey: 0
+  pickupKey: 32
   pickupTarget: {fileID: 4746423306323482}
 --- !u!136 &136986583741483394
 CapsuleCollider:
