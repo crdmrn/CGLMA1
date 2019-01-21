@@ -7,7 +7,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 // When a class derives from one interface (or more), they are listed after the classes it derives from
 // In this case, the "Dispenser" class derives from the "MonoBehaviour" class and from the "ISnapSurface" interface
-public class Dispenser : MonoBehaviour, ISnapSurface {
+public class Stove : MonoBehaviour, ISnapSurface {
 
 	// When a class derives from an Interface, it MUST implement all of the Interface's variables and functions
 	// When implementing said variables and functions, they MUST be marked as public
@@ -25,8 +25,26 @@ public class Dispenser : MonoBehaviour, ISnapSurface {
 	public Pickable snappedHere {
 		get {
 			return _snappedHere;
-		} set {
+		}
+		set {
+			Pickable oldSnapped = _snappedHere;
+			// set the value of the reference variable
 			_snappedHere = value;
+			// start/stop cooking coroutine depending on said variable
+			if (_snappedHere != null) {
+				if (_snappedHere.cookingSlider != null)
+					_snappedHere.cookingSlider.gameObject.SetActive(true);
+				cookCoroutine = StartCoroutine(Cook());
+				Debug.Log("COOK");
+			} else {
+				if (cookCoroutine != null) {
+					if (oldSnapped.cookingSlider != null)
+						oldSnapped.cookingSlider.gameObject.SetActive(false);
+					StopCoroutine(cookCoroutine);
+					cookCoroutine = null;
+					Debug.Log("STOP COOKING");
+				}
+			}
 		}
 	}
 
@@ -38,8 +56,7 @@ public class Dispenser : MonoBehaviour, ISnapSurface {
 		snappedHere = pickable;
 	}
 
-	public Pickable UnSnap()
-	{
+	public Pickable UnSnap() {
 		// create temp reference
 		Pickable p = snappedHere;
 		// empty local variable
@@ -47,34 +64,15 @@ public class Dispenser : MonoBehaviour, ISnapSurface {
 		// return reference
 		return p;
 	}
+
+	Coroutine cookCoroutine;
+	IEnumerator Cook() {
+		while (snappedHere.cookingPoint < 100) {
+			// ++ increases int variables by 1 (-- decreases it)
+			yield return new WaitForSeconds(5f / 100f);
+			snappedHere.cookingPoint++;
+		}
+	}
 	#endregion
-
-	// Reference variable to the prefab we want to be spawned
-	public GameObject dispensedObject;
-
-	// The function to call when we want to spawn ("dispense") an instance of the dispencedObject
-	public void DispenseObject() {
-		// If nothing is snapped to this surface
-		if (snappedHere == null) {
-			// Instantiate the dispencedObject and snap it to this surface
-			GameObject GO = (GameObject)Instantiate(dispensedObject);
-			Pickable p = GO.GetComponent<Pickable>();
-			Snap(p);
-		}
-	}
-
-	// OnDrawGizmosSelected is a built-in Unity function that allows us to draw stuff in the Editor Scene view for debugging purposes
-	// As the name suggests, those things are only drawn when the gameObject that has this component is selected in the Hierarchy
-	// To have things drawn regardless of the Hierarchy selection, use OndrawGizmosInstead
-	// Things drawn in the Scene view are NOT visible in the Game view nor in the builds
-	private void OnDrawGizmosSelected() {
-		if (snapPoint != null) {
-			if (snappedHere == null)
-				Gizmos.color = Color.red;
-			else
-				Gizmos.color = Color.green;
-			Gizmos.DrawSphere(snapPoint.position, 0.3f);
-		}
-	}
 
 }

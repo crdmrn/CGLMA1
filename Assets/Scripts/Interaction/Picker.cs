@@ -45,20 +45,38 @@ public class Picker : MonoBehaviour {
 					if (p != null)
 						Pick(p);
 
-					// if the collider has a dispenser component instead
-					Dispenser d = hit.transform.GetComponent<Dispenser>();
-					// check is something is already snapped on the dispenser
-					if (d != null) {
-						// if not, create
-						if (d.snappedHere == null) {
-							d.DispenseObject();
+					// check for snapsurface
+					ISnapSurface snapSurface = hit.transform.GetComponent<ISnapSurface>();
+					if (snapSurface != null) {
+
+						// if the snapSurface is a Dispenser
+						if (snapSurface.GetType() == typeof(Dispenser))
+						{
+							// cast the interface to the Dispenser class
+							Dispenser d = (Dispenser)snapSurface;
+							// check is something is already snapped on the dispenser
+							if (d.snappedHere == null) {
+								d.DispenseObject();
+							}
+							// if yes, pick it up and empty the reference so new things can be spawned
+							else {
+								Pick(d.snappedHere);
+								d.snappedHere = null;
+							}
 						}
-						// if yes, pick it up and empty the reference so new things can be spawned
+						// if it's NOT a Dispenser
 						else {
-							Pick(d.snappedHere);
-							d.snappedHere = null;
+							Pick(snapSurface.UnSnap());
+							snapSurface.snappedHere = null;
 						}
+
 					}
+
+					// if the collider has a dispenser component instead
+					//Dispenser d = hit.transform.GetComponent<Dispenser>();
+					//if (d != null) {
+						// if not, create
+					//}
 
 				}
 			}
@@ -77,6 +95,7 @@ public class Picker : MonoBehaviour {
 						// if it does, snap the given object to said surface
 						heldObject.transform.parent = null;
 						snapSurface.Snap(heldObject);
+						heldObject = null;
 					}
 				}
 
@@ -99,6 +118,9 @@ public class Picker : MonoBehaviour {
 	// parameters can be referenced in a function by their name
 	// whenever calling a function that requires parameters, we MUST parse a value for each of them
 	void Pick(Pickable pickable) {
+
+		if (pickable == null)
+			return;
 
 		// deactivate the physics on the parsed Pickable
 		pickable.DeactivatePhysics();

@@ -38,6 +38,16 @@ public class Table : MonoBehaviour, ISnapSurface {
 		pickable.transform.position = snapPoint.position - pickable.snapPoint.localPosition;
 		snappedHere = pickable;
 	}
+
+	public Pickable UnSnap()
+	{
+		// create temp reference
+		Pickable p = snappedHere;
+		// empty local variable
+		snappedHere = null;
+		// return reference
+		return p;
+	}
 	#endregion
 
 }

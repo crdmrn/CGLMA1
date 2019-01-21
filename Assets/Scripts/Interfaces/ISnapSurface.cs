@@ -19,4 +19,7 @@ public interface ISnapSurface {
 	// Same goes for the functions defined in the interface
 	void Snap(Pickable pickable);
 
+	// generic function to eventually unsnap stuff from the surface
+	Pickable UnSnap();
+
 }
