@@ -21,7 +21,11 @@ public class Stove : MonoBehaviour, ISnapSurface {
 		}
 	}
 
+	// private reference variable
 	Pickable _snappedHere;
+	// get/set variable to store the reference to the snapped object
+	// is set up in a way that as soon as something is snapped here, a cook coroutine is started
+	// when it gets emptied (= the corrently snapped object is removed) the coroutine is stopped
 	public Pickable snappedHere {
 		get {
 			return _snappedHere;
@@ -65,11 +69,18 @@ public class Stove : MonoBehaviour, ISnapSurface {
 		return p;
 	}
 
+	public float cookingTime = 5f;
+
+	// private variable to store reference to the Coroutine used to currently "cook" the snapped object
+	// storing reference to a Coroutine allows th specifically stop that coroutine
+	// it also allows us to make sure only one coroutine of that kind is running
 	Coroutine cookCoroutine;
+	// cook Coroutine
 	IEnumerator Cook() {
-		while (snappedHere.cookingPoint < 100) {
+		while (snappedHere.cookingPoint < snappedHere.cookingPoints) {
+			// wait for the amount of time needed to make sure the overall cooking time is respected
+			yield return new WaitForSeconds(cookingTime / snappedHere.cookingPoints);
 			// ++ increases int variables by 1 (-- decreases it)
-			yield return new WaitForSeconds(5f / 100f);
 			snappedHere.cookingPoint++;
 		}
 	}

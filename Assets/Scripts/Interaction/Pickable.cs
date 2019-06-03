@@ -13,6 +13,8 @@ public class Pickable : MonoBehaviour {
 	// public reference to the slider component to use for showing progression
 	public Slider cookingSlider;
 
+	// the amount of points needed for the Pickable to "cook" (lower = faster)
+	public float cookingPoints = 100f;
 	// private reference variable
 	int _cookingPoint = 0;
 	// get/set variable to store the item cooking progression

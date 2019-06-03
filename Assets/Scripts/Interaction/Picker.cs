@@ -119,6 +119,7 @@ public class Picker : MonoBehaviour {
 	// whenever calling a function that requires parameters, we MUST parse a value for each of them
 	void Pick(Pickable pickable) {
 
+		// safety nullcheck
 		if (pickable == null)
 			return;
 

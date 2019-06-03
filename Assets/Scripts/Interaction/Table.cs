@@ -39,8 +39,7 @@ public class Table : MonoBehaviour, ISnapSurface {
 		snappedHere = pickable;
 	}
 
-	public Pickable UnSnap()
-	{
+	public Pickable UnSnap() {
 		// create temp reference
 		Pickable p = snappedHere;
 		// empty local variable
