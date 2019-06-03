@@ -10,20 +10,18 @@ public class Pickable : MonoBehaviour {
 
 	public Transform snapPoint;
 
-	public Color cookedColor = Color.red;
-
+	// public reference to the slider component to use for showing progression
 	public Slider cookingSlider;
 
-	//[SerializeField]
+	// private reference variable
 	int _cookingPoint = 0;
+	// get/set variable to store the item cooking progression
 	public int cookingPoint {
 		get {
 			return _cookingPoint;
 		} set {
 			_cookingPoint = value;
-			// change color
-			//Renderer r = GetComponent<Renderer>();
-			//r.material.color = Color.Lerp(Color.white, cookedColor, (float) _cookingPoint / 100f);
+			// increasde slider value to show the cooking progression
 			if (cookingSlider != null)
 				cookingSlider.value = _cookingPoint;
 		}
@@ -65,13 +63,10 @@ public class Pickable : MonoBehaviour {
 
 	void Update() {
 		if (cookingSlider != null) {
-			/*Vector2 screenPosition = Camera.main.WorldToScreenPoint(transform.position);
-			RectTransform sliderRect = cookingSlider.GetComponent<RectTransform>();
-			sliderRect.anchoredPosition = screenPosition + new Vector2(0f, 20f);*/
+			// keep slider in position
 			cookingSlider.transform.parent.position = transform.position + offset;
 			cookingSlider.transform.parent.rotation = Quaternion.identity;
 		}
-
 	}
 	
 	// Function to change all the necessary parameters to make sure the attached Rigidbody doesn't follow physics anymore
@@ -79,10 +74,8 @@ public class Pickable : MonoBehaviour {
 		// set values for rigidbody so it doesn't follows physics
 		rigidbodyComponent.isKinematic = true;
 		rigidbodyComponent.useGravity = false;
-
 		// set collider as trigger
 		colliderComponent.isTrigger = true;
-
 		// turn the renderer RED for debugging purposes
 		/*Renderer r = GetComponent<Renderer>();
 		if (r != null)
@@ -94,10 +87,8 @@ public class Pickable : MonoBehaviour {
 		// set values for rigidbody to start following physics
 		rigidbodyComponent.isKinematic = false;
 		rigidbodyComponent.useGravity = true;
-
 		// set the collider back to solid
 		colliderComponent.isTrigger = false;
-
 		// turn the renderer GREEN for debugging purposes
 		/*Renderer r = GetComponent<Renderer>();
 		if (r != null)

@@ -38,8 +38,8 @@ public class Dispenser : MonoBehaviour, ISnapSurface {
 		snappedHere = pickable;
 	}
 
-	public Pickable UnSnap()
-	{
+	// Unsnap the currently snapped object from the surface
+	public Pickable UnSnap() {
 		// create temp reference
 		Pickable p = snappedHere;
 		// empty local variable
