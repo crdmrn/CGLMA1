@@ -3,6 +3,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using FMODUnity;
 
 // NAMESPACES are used to separate code into chunks
 // things inside a namespace tag are available to other (in different files as well) scripts that are included in the same namespace tag
@@ -17,6 +18,9 @@ namespace Overcooked {
 	// a class can derive from another class, such class can be specified after the ":"
 	// most of the classes in Unity derive from MonoBehaviour, which is the one responsible for calling built-in functions such as "Start" or "Update" on such classes
 	public class Movement : MonoBehaviour {
+
+		public StudioEventEmitter footstepsEmitter;
+		public StudioParameterTrigger footstepSpeedParameter;
 
 		// variables are used to store data
 		// oversemplifying, for now, there re 6 main kind of variables in c#
@@ -57,6 +61,14 @@ namespace Overcooked {
 		// store reference to player's Animator component
 		Animator playerAnimator;
 
+		Vector3 planarVelocity {
+			get {
+				Vector3 temp = playerRigidbody.velocity;
+				temp.y = transform.position.y;
+				return temp;
+			}
+		}
+
 		// allow us to decide the acceleration of our player
 		// we set it to public so we can experiment in the editor without changing the value in the code
 		public float acceleration;
@@ -73,6 +85,8 @@ namespace Overcooked {
 
 			// look for an Animator Component among the children of the player gameobject
 			playerAnimator = GetComponentInChildren<Animator>();
+
+			StartCoroutine(Footsteps());
 		}
 
 		// Update is called once per frame
@@ -89,6 +103,7 @@ namespace Overcooked {
 			// the "new" constructor allows me to create new instances of a class, in this case Vector2
 			// if the class allows for it, parameters can be passed to the constructor between the brackets
 			input = new Vector2(inputH, inputV);
+
 		}
 
 		// to apply the required force to our player Rigidbody to move it around we use the Mnobehavour.FixedUpdate method
@@ -98,11 +113,12 @@ namespace Overcooked {
 		private void FixedUpdate() {
 
 			// as our player will move on the xz plane, we need to translate our Vector2 input into a Vector3 (3D)
-			Vector3 direction = new Vector3(input.x, 0f, input.y);
+			Vector3 direction = new Vector3(input.x, 0f, input.y) * acceleration;
+			//direction.y = transform.position.y;
 
 			// apply consequent force to Rigidbody trough the AddForce(Vector3 forceMode, ForceMode forceMode) method of the Rigidbody class
 			// between the brackets we pass the parameters required by the method
-			playerRigidbody.AddForce(direction * acceleration, ForceMode.VelocityChange);
+			playerRigidbody.AddForce(direction, ForceMode.VelocityChange);
 
 			// now we need to cap the speed of our character, as otherwise it will accelerate infinitely as long as we keep a button pressed
 
@@ -110,11 +126,13 @@ namespace Overcooked {
 			Vector3 rVelocity = playerRigidbody.velocity;
 
 			// if the magnitude (length) of the velocity is bigger of the set max speed
-			if (rVelocity.magnitude > maxSpeed) {
+			if (planarVelocity.magnitude > maxSpeed) {
 
+				Vector3 clampedVelocity = Vector3.ClampMagnitude(planarVelocity, maxSpeed);
 				// using the Vector3.ClampMagnitude(Vector3 vector, float MaxLength) method, clamp the velocity Vector3 of the player Rigidbody component thus clamping it's movement speed
-				playerRigidbody.velocity = Vector3.ClampMagnitude(playerRigidbody.velocity, maxSpeed);
+				playerRigidbody.velocity = new Vector3(clampedVelocity.x, playerRigidbody.velocity.y, clampedVelocity.z); // Vector3.ClampMagnitude(playerRigidbody.velocity, maxSpeed);
 
+				footstepsEmitter.SetParameter("Speed", playerRigidbody.velocity.magnitude / maxSpeed);
 			}
 
 
@@ -141,6 +159,11 @@ namespace Overcooked {
 
 		}
 
+		private void LateUpdate() {
+			if (Input.GetButtonDown("Jump"))
+				Jump();
+		}
+
 		// #region and #endregion can be used to better organize the code
 		#region CharacterRotation
 
@@ -151,10 +174,14 @@ namespace Overcooked {
 		// void means that this function DOES NOT return any value, it only runs some code
 		// the empty brackets () next to the function name mean that this function does not need any values to be paresd in order to work
 		void RotateCharacter() {
-
 			// get the rotation of the playerRigidbody velocity vector
 			// Quaternions are used to sore rotation data, they work like Vectors do for directions
-			Quaternion directionRot = Quaternion.LookRotation(playerRigidbody.velocity);
+			Vector3 planarDirection = new Vector3(playerRigidbody.velocity.x, 0f, playerRigidbody.velocity.z);
+			//Debug.Log(planarDirection.sqrMagnitude);
+			if (planarDirection.sqrMagnitude < 0.01f)
+				return;
+
+			Quaternion directionRot = Quaternion.LookRotation(planarDirection);
 
 			// now that we know which is the rotation we need to apply to our character in  order to match the movement direction
 			// we want to make sure that it?s not applied all at once, but instead only part of it every frame, to obtain a lerping effect
@@ -168,6 +195,94 @@ namespace Overcooked {
 		}
 		#endregion
 
+		public LayerMask raycastLayer;
+
+		Dictionary<Vector3, bool> jumpPositions = new Dictionary<Vector3, bool>();
+		public float jumpForce = 5f;
+		public int airborneJumps = 1;
+		int currentAirborneJumps = 0;
+		bool isGrounded {
+			get {
+				Ray ray = new Ray(transform.position + (Vector3.one * 0.1f), Vector3.down);
+				Debug.DrawRay(transform.position + (Vector3.one * 0.1f), Vector3.down * 0.2f, Color.red, 10f);
+				return Physics.Raycast(ray, 0.2f, raycastLayer);
+			}
+		}
+
+		public Transform wallJumpChecker;
+		bool canWallJump {
+			get {
+				Ray ray = new Ray(wallJumpChecker.position, wallJumpChecker.forward);
+				Debug.DrawRay(ray.origin, ray.direction, Color.blue, 10f);
+				return Physics.Raycast(ray, 1f, raycastLayer);
+			}
+		}
+
+		void Jump() {
+			if (isGrounded) {
+				playerRigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+				currentAirborneJumps = 0;
+				if (!jumpPositions.ContainsKey(transform.position))
+					jumpPositions.Add(transform.position, false);
+			} else if (!isGrounded && canWallJump) {
+					Vector3 direction = Vector3.up * jumpForce;
+					direction.x = (transform.right - transform.position).z * 10f;
+					playerRigidbody.AddForce(Vector3.up * jumpForce * 2f, ForceMode.Impulse);
+					playerRigidbody.AddForce(Vector3.right * 10f * (transform.right - transform.position).z, ForceMode.VelocityChange);
+					Debug.DrawRay(transform.position, direction, Color.green, 10f);
+					//playerRigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+			} else if (currentAirborneJumps < airborneJumps) {
+				playerRigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+				currentAirborneJumps++;
+				if (!jumpPositions.ContainsKey(transform.position))
+					jumpPositions.Add(transform.position, true);
+			}
+		}
+
+		public float footstepThreshold = 1f;
+
+		public void Footstep() {
+			AnimationEvent e;
+			//playerAnimator.
+					//	footstepsEmitter.Play();
+		}
+
+		IEnumerator Footsteps() {
+			float step = 0f;
+			while (true) {
+				//playerAnimator.fireEvents
+				/*if (playerRigidbody.velocity.sqrMagnitude > 0f) {
+					//footstepsEmitter.SetParameter("Speed", playerRigidbody.velocity.magnitude / maxSpeed);
+					if (!footstepsEmitter.IsPlaying())
+				}
+				else {
+					//footstepsEmitter.SetParameter("Speed", 0f);
+					if(footstepsEmitter.IsPlaying())
+						footstepsEmitter.Stop();
+				}*/
+				/*if (playerRigidbody.velocity.sqrMagnitude > 0f) {
+					Debug.Log(playerRigidbody.velocity.sqrMagnitude);
+					step += 0.1f * playerRigidbody.velocity.sqrMagnitude;
+					if (step >= footstepThreshold) {
+						if (footstepsEmitter != null)
+							footstepsEmitter.Play();
+						step = 0f;
+					}
+				} else {
+					step = 0f;
+				}*/
+				yield return null;
+			}
+		}
+
+		private void OnDrawGizmos() {
+			foreach(KeyValuePair<Vector3, bool> entry in jumpPositions) {
+				Color backup = Gizmos.color;
+				Gizmos.color = entry.Value ? Color.blue : Color.red;
+				Gizmos.DrawSphere(entry.Key, 0.5f);
+				Gizmos.color = backup;
+			}
+		}
 
 	}
 
