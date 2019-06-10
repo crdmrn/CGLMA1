@@ -86,6 +86,7 @@ namespace Overcooked {
 			// look for an Animator Component among the children of the player gameobject
 			playerAnimator = GetComponentInChildren<Animator>();
 
+			// as Coroutine are different from normal functions, they need to be started using the StartCoroutine(Coroutine) function 
 			StartCoroutine(Footsteps());
 		}
 
@@ -159,8 +160,11 @@ namespace Overcooked {
 
 		}
 
-		private void LateUpdate() {
+		// LateUpdate runs once per frame (like the Update function), but it runs AT THE END of the frame, so AFTER the Update function
+		void LateUpdate() {
+			// check if the "Jump" button was pressed during this frame
 			if (Input.GetButtonDown("Jump"))
+				// execute the jump code
 				Jump();
 		}
 
@@ -195,16 +199,31 @@ namespace Overcooked {
 		}
 		#endregion
 
+		// ---- LESSON 6 ----
+
+		#region Jump
+		// LayerMasks are used by the physics engine to detrmine which objects to consider when raycasting and calculating collisions
+		// they use bit-wise operations as they are way quicker that if statements and for loops
 		public LayerMask raycastLayer;
 
+		// used for debugging visualization
 		Dictionary<Vector3, bool> jumpPositions = new Dictionary<Vector3, bool>();
+
+		// the higher the force applied, the higher the jump
 		public float jumpForce = 5f;
+		// how many times can the player jump mid-air?
 		public int airborneJumps = 1;
+		// counter to make sure we only get the desired amounts of jumps
 		int currentAirborneJumps = 0;
+		// get/set variables to check if the player is on the ground (or near enought to the ground to be considered so)
 		bool isGrounded {
 			get {
+				// Rays store a start point and a direction Ray(start, direction)
+				// in this case we want to start raycasting from a tiny bit higher than the player bottom, and raycast downwards
 				Ray ray = new Ray(transform.position + (Vector3.one * 0.1f), Vector3.down);
+				// draw the ray on screen, for debugging purposes
 				Debug.DrawRay(transform.position + (Vector3.one * 0.1f), Vector3.down * 0.2f, Color.red, 10f);
+				// Physics.Raycast checks, given a LayerMask, if the given ray intersects any object that is part of the LayerMask
 				return Physics.Raycast(ray, 0.2f, raycastLayer);
 			}
 		}
@@ -219,62 +238,42 @@ namespace Overcooked {
 		}
 
 		void Jump() {
+			// if the player is touching the ground, Jump
 			if (isGrounded) {
+				// add a force on the Y axis (Vector3.up)
 				playerRigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+				// reset the counter for mid-air jumps
 				currentAirborneJumps = 0;
+				// store the position of the player for debugging
 				if (!jumpPositions.ContainsKey(transform.position))
 					jumpPositions.Add(transform.position, false);
-			} else if (!isGrounded && canWallJump) {
-					Vector3 direction = Vector3.up * jumpForce;
-					direction.x = (transform.right - transform.position).z * 10f;
-					playerRigidbody.AddForce(Vector3.up * jumpForce * 2f, ForceMode.Impulse);
-					playerRigidbody.AddForce(Vector3.right * 10f * (transform.right - transform.position).z, ForceMode.VelocityChange);
-					Debug.DrawRay(transform.position, direction, Color.green, 10f);
-					//playerRigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-			} else if (currentAirborneJumps < airborneJumps) {
+			}
+			// if the player IS NOT grounded, but it's facing a wall, Wall Jump
+			else if (!isGrounded && canWallJump) {
+				// create a vector to store the direction of the jump, first it points up
+				Vector3 direction = Vector3.up * jumpForce;
+				// add to the jump vector the opposite of the forward-facing vector of out character (so we obtain a vector pointing in the opposite direction of the wall)	
+				direction.x = (transform.right - transform.position).z * 10f;
+				// apply force to get wall-jump
+				playerRigidbody.AddForce(direction, ForceMode.Impulse);
+				// draw the direction vector for debugging
+				Debug.DrawRay(transform.position, direction, Color.green, 10f);
+			}
+			// if the player IS NOT grounded, but still has some mid-air jumps remaining, Double Jump
+			else if (currentAirborneJumps < airborneJumps) {
+				// addthe same force on the Y axis (Vector3.up) as in the normal Jump
 				playerRigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+				// add 1 to the mid-air jumps counter
 				currentAirborneJumps++;
+				// store the position of the player for debugging
 				if (!jumpPositions.ContainsKey(transform.position))
 					jumpPositions.Add(transform.position, true);
 			}
 		}
 
-		public float footstepThreshold = 1f;
-
-		public void Footstep() {
-			AnimationEvent e;
-			//playerAnimator.
-					//	footstepsEmitter.Play();
-		}
-
-		IEnumerator Footsteps() {
-			float step = 0f;
-			while (true) {
-				//playerAnimator.fireEvents
-				/*if (playerRigidbody.velocity.sqrMagnitude > 0f) {
-					//footstepsEmitter.SetParameter("Speed", playerRigidbody.velocity.magnitude / maxSpeed);
-					if (!footstepsEmitter.IsPlaying())
-				}
-				else {
-					//footstepsEmitter.SetParameter("Speed", 0f);
-					if(footstepsEmitter.IsPlaying())
-						footstepsEmitter.Stop();
-				}*/
-				/*if (playerRigidbody.velocity.sqrMagnitude > 0f) {
-					Debug.Log(playerRigidbody.velocity.sqrMagnitude);
-					step += 0.1f * playerRigidbody.velocity.sqrMagnitude;
-					if (step >= footstepThreshold) {
-						if (footstepsEmitter != null)
-							footstepsEmitter.Play();
-						step = 0f;
-					}
-				} else {
-					step = 0f;
-				}*/
-				yield return null;
-			}
-		}
-
+		// OnDrawGizmos is a built-in Unity function that allows us to draw things in the scene for debugging
+		// in this case, we're using it to draw a sphere on each spot where the player has jumped
+		// red spheres for jumps on the ground, blue spheres for mid-air jumps
 		private void OnDrawGizmos() {
 			foreach(KeyValuePair<Vector3, bool> entry in jumpPositions) {
 				Color backup = Gizmos.color;
@@ -283,6 +282,68 @@ namespace Overcooked {
 				Gizmos.color = backup;
 			}
 		}
+		#endregion
+
+		// ---- LESSON 5 ----
+
+		#region Footsteps
+		// an enum is a value that can assume the values that are among the curly brackets
+		// we use this to select how we want the footsteps to be generated
+		public enum FootstepCreationType {
+			None,
+			Fmod,
+			Unity
+		}
+
+		// how to calculate footsteps, used to switch between different examples
+		public FootstepCreationType footstepsType;
+		public float footstepThreshold = 1f;
+
+		// Coroutines are functions that return multiple times, this means they can be used to run parallel tasks
+		// in Unity, Coroutines only return one time per frame
+		IEnumerator Footsteps() {
+			float step = 0f;
+			// in a Coroutine, while loops are one of the way used to have the function run constantly, or until a certain condition is met
+			// as the while loop continues execute as lonc as the boolean between the brackets is true, writing "true" in the brackets makes the Coroutine run as long as the gameObject is active
+			while (true) {
+				// switches are similar to if/else statements but allows "default" cases
+				switch (footstepsType) {
+					// if we don't want footsteps
+					case FootstepCreationType.None:
+						yield return null;
+						break;
+					// if we want the footsteps to be looped by fmod
+					case FootstepCreationType.Fmod:
+						if (playerRigidbody.velocity.sqrMagnitude > 0f) {
+							footstepsEmitter.SetParameter("Speed", playerRigidbody.velocity.magnitude / maxSpeed);
+							if (!footstepsEmitter.IsPlaying())
+								footstepsEmitter.Play();
+						}
+						else {
+							footstepsEmitter.SetParameter("Speed", 0f);
+							if(footstepsEmitter.IsPlaying())
+								footstepsEmitter.Stop();
+						}
+						break;
+					// if we want the fopotsteps to be looped in unity (but still be played by fmod)
+					case FootstepCreationType.Unity:
+						if (playerRigidbody.velocity.sqrMagnitude > 0f) {
+							Debug.Log(playerRigidbody.velocity.sqrMagnitude);
+							step += 0.1f * playerRigidbody.velocity.sqrMagnitude;
+							if (step >= footstepThreshold) {
+								if (footstepsEmitter != null)
+									footstepsEmitter.Play();
+								step = 0f;
+							}
+						} else {
+							step = 0f;
+						}
+						break;
+				}
+				yield return null;
+			}
+		}
+		#endregion
 
 	}
 
